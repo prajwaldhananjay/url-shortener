@@ -6,10 +6,12 @@ import java.net.URI
 import java.util.concurrent.atomic.AtomicLong
 import com.example.url_shortener.domain.ShortenedUrlsRepository
 import com.example.url_shortener.domain.ShortenedUrl
+import com.example.url_shortener.domain.Counter
 
 @Service
 class ShortCodeServiceImpl ( 
-        private val shortenedUrlsRepository: ShortenedUrlsRepository 
+        private val shortenedUrlsRepository: ShortenedUrlsRepository,
+        private val sequenceGeneratorService: SequenceGeneratorService
     ) : ShortCodeService {
     
     companion object {
@@ -17,8 +19,6 @@ class ShortCodeServiceImpl (
         private val LOCALHOST_ADDRESSES = setOf("localhost", "127.0.0.1", "0.0.0.0")
         private val PRIVATE_IP_REGEX = Regex("172\\.(1[6-9]|2[0-9]|3[0-1])\\..*")
     }
-    
-    private val counter = AtomicLong(100_000_000_000)
     
     override fun createShortCode(longUrl: String): ShortenedUrl {
         validateUrl(longUrl)
@@ -73,8 +73,8 @@ class ShortCodeServiceImpl (
     }
     
     fun generateShortCode(): String {
-        val count = counter.incrementAndGet()
-        val encoded = Base62.encode(count)
+        val counterValue = sequenceGeneratorService.generateSequence("shortCodeCounter", 100000000000L)
+        val encoded = Base62.encode(counterValue)
         return encoded.takeLast(7)
     }
 }
