@@ -72,6 +72,11 @@ class ShortCodeServiceImpl (
                host.matches(PRIVATE_IP_REGEX)
     }
     
+    override fun getLongUrl(shortCode: String): String? {
+        val shortenedUrl = shortenedUrlsRepository.findByShortCode(shortCode)
+        return shortenedUrl?.originalUrl
+    }
+    
     fun generateShortCode(): String {
         val counterValue = sequenceGeneratorService.generateSequence("shortCodeCounter", 100000000000L)
         val encoded = Base62.encode(counterValue)
