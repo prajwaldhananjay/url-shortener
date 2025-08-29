@@ -3,16 +3,14 @@ package com.example.url_shortener.service
 import org.springframework.stereotype.Service
 import org.unbrokendome.base62.Base62
 import java.net.URI
-import java.util.concurrent.atomic.AtomicLong
 import com.example.url_shortener.domain.ShortenedUrlsRepository
 import com.example.url_shortener.domain.ShortenedUrl
-import com.example.url_shortener.domain.Counter
 
 @Service
-class ShortCodeServiceImpl ( 
-        private val shortenedUrlsRepository: ShortenedUrlsRepository,
-        private val sequenceGeneratorService: SequenceGeneratorService
-    ) : ShortCodeService {
+class ShortCodeWriteServiceImpl(
+    private val shortenedUrlsRepository: ShortenedUrlsRepository,
+    private val sequenceGeneratorService: SequenceGeneratorService
+) : ShortCodeWriteService {
     
     companion object {
         private val ALLOWED_PROTOCOLS = setOf("http", "https")
@@ -23,13 +21,11 @@ class ShortCodeServiceImpl (
     override fun createShortCode(longUrl: String): ShortenedUrl {
         validateUrl(longUrl)
         
-        // Check if URL already exists
         val shortenedUrl = shortenedUrlsRepository.findByOriginalUrl(longUrl)
         if (shortenedUrl != null) {
             return shortenedUrl
         }
         
-        // Generate new short code if URL doesn't exist
         val shortCode = generateShortCode()
         val shortendUrlRecord = shortenedUrlsRepository.save(ShortenedUrl(shortCode = shortCode, originalUrl = longUrl, createdAt = java.time.Instant.now()))
         println("Save operation complete. Saved short code: ${shortCode}")
@@ -72,12 +68,7 @@ class ShortCodeServiceImpl (
                host.matches(PRIVATE_IP_REGEX)
     }
     
-    override fun getLongUrl(shortCode: String): String? {
-        val shortenedUrl = shortenedUrlsRepository.findByShortCode(shortCode)
-        return shortenedUrl?.originalUrl
-    }
-    
-    fun generateShortCode(): String {
+    private fun generateShortCode(): String {
         val counterValue = sequenceGeneratorService.generateSequence("shortCodeCounter", 100000000000L)
         val encoded = Base62.encode(counterValue)
         return encoded.takeLast(7)

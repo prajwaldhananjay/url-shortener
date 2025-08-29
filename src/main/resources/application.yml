@@ -1,3 +1,20 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000ms # 10 minutes
+
 management:
   endpoints:
     web:
@@ -8,4 +25,4 @@ management:
       show-details: always
   health:
     redis:
-      enabled: false
+      enabled: true

@@ -1,4 +1,4 @@
-package com.example.url_shortener.api
+package com.example.url_shortener.data
 
 import java.time.Instant
 

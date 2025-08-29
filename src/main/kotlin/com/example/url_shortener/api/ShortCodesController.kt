@@ -12,21 +12,25 @@ import org.springframework.http.ResponseEntity
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpHeaders
 import java.net.URI
-import com.example.url_shortener.api.ShortCodeResponse
-import com.example.url_shortener.api.CreateShortCodeRequest
-import com.example.url_shortener.service.ShortCodeService
+import com.example.url_shortener.data.ShortCodeResponse
+import com.example.url_shortener.data.CreateShortCodeRequest
+import com.example.url_shortener.service.ShortCodeReadService
+import com.example.url_shortener.service.ShortCodeWriteService
 import com.example.url_shortener.domain.ShortenedUrl
 import jakarta.validation.Valid
 
 @RestController
 @RequestMapping("/api/v1")
-class ShortCodesController(private val shortCodeService: ShortCodeService) {
+class ShortCodesController(
+    private val shortCodeReadService: ShortCodeReadService,
+    private val shortCodeWriteService: ShortCodeWriteService
+) {
 
     private val baseUrl = "https://myproject.de/"
 
     @PostMapping("/create-short-code")
     fun createShortCode(@Valid @RequestBody request: CreateShortCodeRequest): ResponseEntity<ShortCodeResponse> {
-        val shortenedUrlData = shortCodeService.createShortCode(request.longUrl)
+        val shortenedUrlData = shortCodeWriteService.createShortCode(request.longUrl)
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ShortCodeResponse(baseUrl + shortenedUrlData.shortCode, shortenedUrlData.originalUrl, 
                 shortenedUrlData.createdAt))
@@ -34,7 +38,7 @@ class ShortCodesController(private val shortCodeService: ShortCodeService) {
 
     @GetMapping("/{shortCode}")
     fun redirectToLongUrl(@PathVariable shortCode: String): ResponseEntity<Void> {
-        val longUrl = shortCodeService.getLongUrl(shortCode)
+        val longUrl = shortCodeReadService.getLongUrl(shortCode)
         
         return if (longUrl != null) {
             val headers = HttpHeaders()
