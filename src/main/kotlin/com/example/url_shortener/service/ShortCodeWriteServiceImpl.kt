@@ -5,6 +5,8 @@ import org.unbrokendome.base62.Base62
 import java.net.URI
 import com.example.url_shortener.domain.ShortenedUrlsRepository
 import com.example.url_shortener.domain.ShortenedUrl
+import com.example.url_shortener.exception.InvalidUrlException
+import com.example.url_shortener.exception.ShortCodeGenerationException
 
 @Service
 class ShortCodeWriteServiceImpl(
@@ -13,7 +15,6 @@ class ShortCodeWriteServiceImpl(
 ) : ShortCodeWriteService {
     
     companion object {
-        private val ALLOWED_PROTOCOLS = setOf("http", "https")
         private val LOCALHOST_ADDRESSES = setOf("localhost", "127.0.0.1", "0.0.0.0")
         private val PRIVATE_IP_REGEX = Regex("172\\.(1[6-9]|2[0-9]|3[0-1])\\..*")
     }
@@ -27,37 +28,30 @@ class ShortCodeWriteServiceImpl(
         }
         
         val shortCode = generateShortCode()
-        val shortendUrlRecord = shortenedUrlsRepository.save(ShortenedUrl(shortCode = shortCode, originalUrl = longUrl, createdAt = java.time.Instant.now()))
+        val shortenedUrlRecord = shortenedUrlsRepository.save(ShortenedUrl(shortCode = shortCode, originalUrl = longUrl, createdAt = java.time.Instant.now()))
         println("Save operation complete. Saved short code: ${shortCode}")
-        return shortendUrlRecord
+        return shortenedUrlRecord
     }
     
     private fun validateUrl(url: String) {
         try {
             val urlObj = URI(url).toURL()
-            validateProtocol(urlObj.protocol)
             validateHost(urlObj.host)
-        } catch (e: IllegalArgumentException) {
+        } catch (e: InvalidUrlException) {
             throw e
         } catch (e: Exception) {
-            throw IllegalArgumentException("Invalid URL: Malformed URL format")
-        }
-    }
-    
-    private fun validateProtocol(protocol: String) {
-        if (protocol.lowercase() !in ALLOWED_PROTOCOLS) {
-            throw IllegalArgumentException("Invalid URL: Only HTTP and HTTPS protocols are allowed")
+            throw InvalidUrlException("Malformed URL format")
         }
     }
     
     private fun validateHost(host: String?) {
         if (host.isNullOrEmpty()) {
-            throw IllegalArgumentException("Invalid URL: Host cannot be empty")
+            throw InvalidUrlException("Host cannot be empty")
         }
         
         val normalizedHost = host.lowercase()
         if (isPrivateOrLocalAddress(normalizedHost)) {
-            throw IllegalArgumentException("Invalid URL: Private/local network addresses are not allowed")
+            throw InvalidUrlException("Private/local network addresses are not allowed")
         }
     }
     

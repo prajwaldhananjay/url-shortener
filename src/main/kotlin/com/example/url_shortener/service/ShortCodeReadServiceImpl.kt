@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.cache.annotation.Cacheable
 import com.example.url_shortener.domain.ShortenedUrlsRepository
 import com.example.url_shortener.service.ShortCodeReadService
+import com.example.url_shortener.exception.ShortCodeNotFoundException
 
 @Service
 class ShortCodeReadServiceImpl(
@@ -11,8 +12,9 @@ class ShortCodeReadServiceImpl(
 ) : ShortCodeReadService {
 
     @Cacheable(value = ["shortCodes"], key = "#shortCode")
-    override fun getLongUrl(shortCode: String): String? {
+    override fun getLongUrl(shortCode: String): String {
         val shortenedUrl = shortenedUrlsRepository.findByShortCode(shortCode)
-        return shortenedUrl?.originalUrl
+            ?: throw ShortCodeNotFoundException(shortCode)
+        return shortenedUrl.originalUrl
     }
 }

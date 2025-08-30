@@ -39,14 +39,9 @@ class ShortCodesController(
     @GetMapping("/{shortCode}")
     fun redirectToLongUrl(@PathVariable shortCode: String): ResponseEntity<Void> {
         val longUrl = shortCodeReadService.getLongUrl(shortCode)
-        
-        return if (longUrl != null) {
-            val headers = HttpHeaders()
-            headers.location = URI.create(longUrl)
-            ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).build()
-        } else {
-            ResponseEntity.notFound().build()
-        }
+        val headers = HttpHeaders()
+        headers.location = URI.create(longUrl)
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).build()
     }
 
 }
