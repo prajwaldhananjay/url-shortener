@@ -7,12 +7,15 @@ import com.example.url_shortener.domain.ShortenedUrlsRepository
 import com.example.url_shortener.domain.ShortenedUrl
 import com.example.url_shortener.exception.InvalidUrlException
 import com.example.url_shortener.exception.ShortCodeGenerationException
+import com.example.url_shortener.util.logger
 
 @Service
 class ShortCodeWriteServiceImpl(
     private val shortenedUrlsRepository: ShortenedUrlsRepository,
     private val sequenceGeneratorService: SequenceGeneratorService
 ) : ShortCodeWriteService {
+    
+    private val log = logger<ShortCodeWriteServiceImpl>()
     
     companion object {
         private val LOCALHOST_ADDRESSES = setOf("localhost", "127.0.0.1", "0.0.0.0")
@@ -24,12 +27,13 @@ class ShortCodeWriteServiceImpl(
         
         val shortenedUrl = shortenedUrlsRepository.findByOriginalUrl(longUrl)
         if (shortenedUrl != null) {
+            log.debug("Existing short code found for URL: {}, returning: {}", longUrl, shortenedUrl.shortCode)
             return shortenedUrl
         }
         
         val shortCode = generateShortCode()
         val shortenedUrlRecord = shortenedUrlsRepository.save(ShortenedUrl(shortCode = shortCode, originalUrl = longUrl, createdAt = java.time.Instant.now()))
-        println("Save operation complete. Saved short code: ${shortCode}")
+        log.info("Successfully created short code: {} for URL: {}", shortCode, longUrl)
         return shortenedUrlRecord
     }
     
@@ -38,19 +42,23 @@ class ShortCodeWriteServiceImpl(
             val urlObj = URI(url).toURL()
             validateHost(urlObj.host)
         } catch (e: InvalidUrlException) {
+            log.warn("URL validation failed for: {} - {}", url, e.message)
             throw e
         } catch (e: Exception) {
+            log.warn("URL validation failed for: {} - malformed format", url)
             throw InvalidUrlException("Malformed URL format")
         }
     }
     
     private fun validateHost(host: String?) {
         if (host.isNullOrEmpty()) {
+            log.warn("Host validation failed: empty host")
             throw InvalidUrlException("Host cannot be empty")
         }
         
         val normalizedHost = host.lowercase()
         if (isPrivateOrLocalAddress(normalizedHost)) {
+            log.warn("Host validation failed: private/local address rejected: {}", host)
             throw InvalidUrlException("Private/local network addresses are not allowed")
         }
     }
