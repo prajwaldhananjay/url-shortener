@@ -1,9 +1,9 @@
 package com.example.url_shortener.exception
 
-import java.time.LocalDateTime
+import java.time.Instant
 
 data class ErrorResponse(
-    val timestamp: LocalDateTime,
+    val timestamp: Instant,
     val status: Int,
     val error: String,
     val message: String,

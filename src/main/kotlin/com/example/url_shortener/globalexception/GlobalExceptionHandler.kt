@@ -6,7 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
-import java.time.LocalDateTime
+import java.time.Instant
 import com.example.url_shortener.exception.ShortCodeNotFoundException
 import com.example.url_shortener.exception.InvalidUrlException
 import com.example.url_shortener.exception.ShortCodeGenerationException
@@ -26,7 +26,7 @@ class GlobalExceptionHandler {
         }
         
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
+            timestamp = Instant.now(),
             status = HttpStatus.BAD_REQUEST.value(),
             error = "Bad Request",
             message = "Validation failed for the request payload.",
@@ -43,7 +43,7 @@ class GlobalExceptionHandler {
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
+            timestamp = Instant.now(),
             status = HttpStatus.NOT_FOUND.value(),
             error = "Not Found",
             message = ex.message ?: "Short code not found",
@@ -59,7 +59,7 @@ class GlobalExceptionHandler {
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
+            timestamp = Instant.now(),
             status = HttpStatus.BAD_REQUEST.value(),
             error = "Bad Request",
             message = ex.message ?: "Invalid URL provided",
@@ -75,7 +75,7 @@ class GlobalExceptionHandler {
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
+            timestamp = Instant.now(),
             status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
             error = "Internal Server Error",
             message = ex.message ?: "Failed to generate short code",
@@ -90,7 +90,7 @@ class GlobalExceptionHandler {
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
         val errorResponse = ErrorResponse(
-            timestamp = LocalDateTime.now(),
+            timestamp = Instant.now(),
             status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
             error = "Internal Server Error",
             message = "An unexpected error occurred",
