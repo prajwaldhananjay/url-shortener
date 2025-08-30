@@ -9,11 +9,11 @@ import org.springframework.data.mongodb.core.FindAndModifyOptions
 import org.springframework.stereotype.Service
 
 @Service
-class SequenceGeneratorServiceImpl(
+class CounterServiceImpl(
     private val mongoTemplate: MongoTemplate
-) : SequenceGeneratorService {
+) : CounterService {
     
-    override fun generateSequence( counterName: String, initialValue: Long ): Long {
+    override fun getNextSequence( counterName: String, initialValue: Long ): Long {
         val insertCounterInitialValue = Update().setOnInsert("value", initialValue)
         val query = Query(Criteria.where("name").`is`(counterName))
         mongoTemplate.upsert(query, insertCounterInitialValue, Counter::class.java)
