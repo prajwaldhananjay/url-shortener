@@ -28,7 +28,7 @@ class ShortCodesController(
 
     private val baseUrl = "https://myproject.de/"
 
-    @PostMapping("/create-short-code")
+    @PostMapping("/short-codes")
     fun createShortCode(@Valid @RequestBody request: CreateShortCodeRequest): ResponseEntity<ShortCodeResponse> {
         val shortenedUrlData = shortCodeWriteService.createShortCode(request.longUrl)
         return ResponseEntity.status(HttpStatus.CREATED).body(
