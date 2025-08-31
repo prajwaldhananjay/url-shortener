@@ -15,6 +15,18 @@ spring:
     redis:
       time-to-live: 600000ms # 10 minutes
 
+# Short Code Pool Configuration
+shortcode:
+  pool:
+    batchSize: 1000                   # Number of short codes to generate in each batch
+    minPoolSize: 500                  # Minimum pool size before triggering replenishment
+    schedulerFixedDelaySeconds: 300   # 5 minutes between scheduled runs
+    initialDelayMs: 60000             # Wait 1 minute after startup before first run
+    cacheKeyPrefix: "shortcode:pool"  # Redis key prefix for the pool
+    lockKey: "shortcode:pool:lock"    # Redis key for distributed locking
+    lockTimeoutMs: 30000              # Lock timeout in milliseconds
+    enableScheduledGeneration: true   # Enable/disable scheduled generation
+
 management:
   endpoints:
     web:

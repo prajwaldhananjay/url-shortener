@@ -11,10 +11,13 @@ import com.example.url_shortener.exception.ShortCodeNotFoundException
 import com.example.url_shortener.exception.InvalidUrlException
 import com.example.url_shortener.exception.ShortCodeGenerationException
 import com.example.url_shortener.exception.ErrorResponse
+import com.example.url_shortener.util.logger
 
 
 @ControllerAdvice
 class GlobalExceptionHandler {
+    
+    private val log = logger<GlobalExceptionHandler>()
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationExceptions(
@@ -89,6 +92,8 @@ class GlobalExceptionHandler {
         ex: Exception, 
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
+        log.error("Unhandled exception occurred", ex)
+
         val errorResponse = ErrorResponse(
             timestamp = Instant.now(),
             status = HttpStatus.INTERNAL_SERVER_ERROR.value(),

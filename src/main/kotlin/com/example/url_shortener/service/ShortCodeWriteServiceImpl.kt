@@ -12,7 +12,8 @@ import com.example.url_shortener.util.logger
 @Service
 class ShortCodeWriteServiceImpl(
     private val shortenedUrlsRepository: ShortenedUrlsRepository,
-    private val sequenceGeneratorService: SequenceGeneratorService
+    private val counterService: CounterService,
+    private val shortCodePoolService: ShortCodePoolService
 ) : ShortCodeWriteService {
     
     private val log = logger<ShortCodeWriteServiceImpl>()
@@ -31,7 +32,7 @@ class ShortCodeWriteServiceImpl(
             return shortenedUrl
         }
         
-        val shortCode = generateShortCode()
+        val shortCode = getOrGenerateShortCode()
         val shortenedUrlRecord = shortenedUrlsRepository.save(ShortenedUrl(shortCode = shortCode, originalUrl = longUrl, createdAt = java.time.Instant.now()))
         log.info("Successfully created short code: {} for URL: {}", shortCode, longUrl)
         return shortenedUrlRecord
@@ -70,9 +71,30 @@ class ShortCodeWriteServiceImpl(
                host.matches(PRIVATE_IP_REGEX)
     }
     
+    private fun getOrGenerateShortCode(): String {
+        // Try to get a pre-generated short code from the pool first
+        val pooledShortCode = shortCodePoolService.getAvailableShortCode()
+        
+        return if (pooledShortCode != null) {
+            log.debug("Using pooled short code: {}", pooledShortCode)
+            pooledShortCode
+        } else {
+            // Fallback to real-time generation
+            log.debug("Pool empty, falling back to real-time generation")
+            generateShortCode()
+        }
+    }
+    
     private fun generateShortCode(): String {
-        val counterValue = sequenceGeneratorService.generateSequence("shortCodeCounter", 100000000000L)
-        val encoded = Base62.encode(counterValue)
-        return encoded.takeLast(7)
+        try {
+            val counterValue = counterService.getNextSequence("shortCodeCounter", 100000000000L)
+            val encoded = Base62.encode(counterValue)
+            val shortCode = encoded.takeLast(7)
+            log.debug("Generated short code via fallback: {}", shortCode)
+            return shortCode
+        } catch (e: Exception) {
+            log.error("Failed to generate short code", e)
+            throw ShortCodeGenerationException("Unable to generate short code: ${e.message}")
+        }
     }
 }
