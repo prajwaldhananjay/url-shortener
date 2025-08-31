@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.HttpMediaTypeNotSupportedException
 import java.time.Instant
 import com.example.url_shortener.exception.ShortCodeNotFoundException
 import com.example.url_shortener.exception.InvalidUrlException
@@ -85,6 +86,21 @@ class GlobalExceptionHandler {
             path = request.getDescription(false).removePrefix("uri=")
         )
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse)
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
+    fun handleUnsupportedMediaType(
+        ex: HttpMediaTypeNotSupportedException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        val errorResponse = ErrorResponse(
+            timestamp = Instant.now(),
+            status = HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
+            error = "Unsupported Media Type",
+            message = ex.message ?: "Content type not supported",
+            path = request.getDescription(false).removePrefix("uri=")
+        )
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(errorResponse)
     }
 
     @ExceptionHandler(Exception::class)

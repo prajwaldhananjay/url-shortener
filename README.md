@@ -85,6 +85,43 @@ GET /actuator/health
 - Input sanitization and validation
 - Comprehensive error responses without information leakage
 
+## Testing
+
+The project includes comprehensive unit tests covering all service layers and API endpoints. Tests are written using JUnit 5, Mockito, and Spring Boot Test framework.
+
+### Test Structure
+
+- **API Tests**: Controller layer testing with MockMvc (`ShortCodesControllerTest`)
+- **Service Tests**: Business logic testing for all service implementations
+  - `ShortCodeWriteServiceImplTest` - URL shortening logic
+  - `ShortCodeReadServiceImplTest` - URL retrieval and redirection
+  - `ShortCodePoolServiceImplTest` - Short code pool management
+  - `CounterServiceImplTest` - Counter generation service
+- **Integration Tests**: Application context and configuration testing (`UrlShortenerApplicationTests`)
+
+### Running Tests
+
+```bash
+# Run all tests
+./gradlew test
+
+# Run tests with detailed output
+./gradlew test --info
+
+# Run specific test class
+./gradlew test --tests "ShortCodesControllerTest"
+
+# Run tests with coverage (if configured)
+./gradlew test jacocoTestReport
+```
+
+### Test Dependencies
+
+- **JUnit 5**: Primary testing framework
+- **Mockito Kotlin**: Mocking framework for Kotlin
+- **Spring Boot Test**: Integration testing support
+- **MockMvc**: Web layer testing
+
 ## Future Enhancements
 
 ### Scalability Improvements

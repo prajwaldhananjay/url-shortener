@@ -41,6 +41,7 @@ class ShortCodeWriteServiceImpl(
     private fun validateUrl(url: String) {
         try {
             val urlObj = URI(url).toURL()
+            validateProtocol(urlObj.protocol)
             validateHost(urlObj.host)
         } catch (e: InvalidUrlException) {
             log.warn("URL validation failed for: {} - {}", url, e.message)
@@ -48,6 +49,19 @@ class ShortCodeWriteServiceImpl(
         } catch (e: Exception) {
             log.warn("URL validation failed for: {} - malformed format", url)
             throw InvalidUrlException("Malformed URL format")
+        }
+    }
+    
+    private fun validateProtocol(protocol: String?) {
+        if (protocol.isNullOrEmpty()) {
+            log.warn("Protocol validation failed: empty protocol")
+            throw InvalidUrlException("Protocol cannot be empty")
+        }
+        
+        val normalizedProtocol = protocol.lowercase()
+        if (normalizedProtocol !in setOf("http", "https")) {
+            log.warn("Protocol validation failed: unsupported protocol: {}", protocol)
+            throw InvalidUrlException("Only HTTP and HTTPS protocols are allowed")
         }
     }
     
