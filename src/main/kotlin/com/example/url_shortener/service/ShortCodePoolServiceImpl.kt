@@ -54,26 +54,15 @@ class ShortCodePoolServiceImpl(
         }
         
         return try {
-            val shortCodes = mutableSetOf<String>()
-            var attempts = 0
-            val maxAttempts = batchSize * 2 // Allow some retries for potential duplicates
-            
-            while (shortCodes.size < batchSize && attempts < maxAttempts) {
-                attempts++
-                val counterValue = counterService.getNextSequence(COUNTER_NAME, COUNTER_START_VALUE)
+            val counterRange = counterService.getNextSequenceBatch(COUNTER_NAME, COUNTER_START_VALUE, batchSize)
+            val shortCodes = counterRange.map { counterValue ->
                 val encoded = Base62.encode(counterValue)
-                val shortCode = encoded.takeLast(7)
-                shortCodes.add(shortCode)
-            }
+                encoded.takeLast(7)
+            }.toTypedArray()
             
-            if (shortCodes.isNotEmpty()) {
-                val addedCount = redisTemplate.opsForSet().add(poolKey, *shortCodes.toTypedArray())?.toInt() ?: 0
-                log.info("Generated and stored {} short codes in pool (attempted: {})", addedCount, batchSize)
-                return addedCount
-            } else {
-                log.warn("Failed to generate any short codes")
-                return 0
-            }
+            val addedCount = redisTemplate.opsForSet().add(poolKey, *shortCodes)?.toInt() ?: 0
+            log.info("Generated and stored {} short codes in pool using batch counter (attempted: {})", addedCount, batchSize)
+            return addedCount
         } catch (e: Exception) {
             log.error("Error generating and storing short codes", e)
             0
