@@ -17,26 +17,26 @@ import com.example.url_shortener.data.CreateShortCodeRequest
 import com.example.url_shortener.service.ShortCodeReadService
 import com.example.url_shortener.service.ShortCodeWriteService
 import com.example.url_shortener.domain.ShortenedUrl
+import com.example.url_shortener.config.UrlShortenerProperties
 import jakarta.validation.Valid
 
 @RestController
 @RequestMapping("/api/v1")
 class ShortCodesController(
     private val shortCodeReadService: ShortCodeReadService,
-    private val shortCodeWriteService: ShortCodeWriteService
+    private val shortCodeWriteService: ShortCodeWriteService,
+    private val urlShortenerProperties: UrlShortenerProperties
 ) {
-
-    private val baseUrl = "https://myproject.de/"
 
     @PostMapping("/short-codes")
     fun createShortCode(@Valid @RequestBody request: CreateShortCodeRequest): ResponseEntity<ShortCodeResponse> {
         val shortenedUrlData = shortCodeWriteService.createShortCode(request.longUrl)
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                ShortCodeResponse(baseUrl + shortenedUrlData.shortCode, shortenedUrlData.originalUrl, 
+                ShortCodeResponse(urlShortenerProperties.baseUrl + shortenedUrlData.shortCode, shortenedUrlData.originalUrl, 
                 shortenedUrlData.createdAt))
     }
 
-    @GetMapping("/{shortCode}")
+    @GetMapping("/short-codes/{shortCode}")
     fun redirectToLongUrl(@PathVariable shortCode: String): ResponseEntity<Void> {
         val longUrl = shortCodeReadService.getLongUrl(shortCode)
         val headers = HttpHeaders()

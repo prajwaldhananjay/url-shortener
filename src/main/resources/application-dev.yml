@@ -1,0 +1,56 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: # No password for local dev
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 4
+          max-idle: 4
+          min-idle: 0
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000ms # 5 minutes for dev (shorter for testing)
+
+# Development-specific configurations
+url-shortener:
+  baseUrl: "http://localhost:8080/"
+
+shortcode:
+  pool:
+    batchSize: 100                    # Smaller batch size for dev
+    minPoolSize: 50                   # Smaller pool for dev
+    schedulerFixedDelaySeconds: 60    # More frequent generation (1 minute) for dev
+    initialDelayMs: 10000             # Shorter initial delay for dev (10 seconds)
+    cacheKeyPrefix: "dev:shortcode:pool"
+    lockKey: "dev:shortcode:pool:lock"
+    lockTimeoutMs: 15000              # Shorter timeout for dev
+    enableScheduledGeneration: true
+
+# Development logging
+logging:
+  level:
+    com.example.url_shortener: DEBUG
+    org.springframework.cache: DEBUG
+    org.springframework.data.redis: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Development management endpoints (more exposed for debugging)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+  health:
+    redis:
+      enabled: true

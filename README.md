@@ -20,11 +20,42 @@ This URL shortener service provides a simple REST API to create shortened URLs f
 ### Prerequisites
 
 - Java 21 or higher
-- MongoDB (running on `localhost:27017`)
-- Redis (running on default port `6379`)
+- MongoDB (for production/QA environments)
+- Redis (required for all environments)
 - Gradle (or use the included wrapper)
 
-### Installation
+### Environment Profiles
+
+The application supports multiple environment profiles with different configurations:
+
+#### Development Profile (Default)
+```bash
+# Runs on http://localhost:8080
+./gradlew bootRun
+```
+- Local Redis required (`localhost:6379`)
+- Debug logging enabled
+- All actuator endpoints exposed
+- Smaller pool sizes for faster startup
+
+#### QA Profile
+```bash
+# Environment variables required
+export REDIS_HOST=qa-redis.example.com
+export SHORTCODE_BASE_URL=https://qa-shortener.example.com/
+./gradlew bootRun --args='--spring.profiles.active=qa'
+```
+
+#### Production Profile
+```bash
+# All infrastructure settings via environment variables
+export REDIS_HOST=prod-redis.cluster.com
+export REDIS_PASSWORD=your-redis-password
+export SHORTCODE_BASE_URL=https://myproject.de/
+./gradlew bootRun --args='--spring.profiles.active=prod'
+```
+
+### Quick Start (Development)
 
 1. **Clone the repository**
    ```bash
@@ -32,16 +63,7 @@ This URL shortener service provides a simple REST API to create shortened URLs f
    cd url-shortener
    ```
 
-2. **Start MongoDB**
-   ```bash
-   # Using Docker
-   docker run -d -p 27017:27017 --name mongodb mongo:latest
-   
-   # Or start your local MongoDB instance
-   mongod
-   ```
-
-3. **Start Redis**
+2. **Start Redis** (required for all profiles)
    ```bash
    # Using Docker
    docker run -d -p 6379:6379 --name redis redis:latest
@@ -50,17 +72,59 @@ This URL shortener service provides a simple REST API to create shortened URLs f
    redis-server
    ```
 
-4. **Build and run the application**
+3. **Run the application**
    ```bash
    ./gradlew bootRun
    ```
 
 The application will start on `http://localhost:8080`
 
+### Configuration
+
+#### Environment Variables (QA/Production)
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `REDIS_HOST` | Redis server hostname | localhost | QA/Prod |
+| `REDIS_PORT` | Redis server port | 6379 | No |
+| `REDIS_PASSWORD` | Redis authentication password | - | Prod |
+| `SHORTCODE_BASE_URL` | Base URL for shortened links | - | QA/Prod |
+| `SHORTCODE_BATCH_SIZE` | Pool generation batch size | 500/2000 | No |
+| `SHORTCODE_MIN_POOL_SIZE` | Minimum pool size threshold | 250/1000 | No |
+| `SERVER_PORT` | Application server port | 8080 | No |
+
 #### Health Check
 ```bash
 GET /actuator/health
 ```
+
+## API Endpoints
+
+### Create Short URL
+```bash
+POST /api/v1/short-codes
+Content-Type: application/json
+
+{
+  "longUrl": "https://example.com/very/long/url"
+}
+```
+
+**Response:**
+```json
+{
+  "shortUrl": "https://myproject.de/abc123",
+  "longUrl": "https://example.com/very/long/url",
+  "createdAt": "2023-12-01T10:30:00Z"
+}
+```
+
+### Redirect to Original URL
+```bash
+GET /api/v1/short-codes/{shortCode}
+```
+
+**Response:** HTTP 301 redirect to the original URL
 
 ## Architecture Design
 
@@ -97,7 +161,6 @@ The project includes comprehensive unit tests covering all service layers and AP
   - `ShortCodeReadServiceImplTest` - URL retrieval and redirection
   - `ShortCodePoolServiceImplTest` - Short code pool management
   - `CounterServiceImplTest` - Counter generation service
-- **Integration Tests**: Application context and configuration testing (`UrlShortenerApplicationTests`)
 
 ### Running Tests
 

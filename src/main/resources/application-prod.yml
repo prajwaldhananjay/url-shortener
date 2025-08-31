@@ -1,0 +1,82 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: ${REDIS_MAX_ACTIVE:16}
+          max-idle: ${REDIS_MAX_IDLE:8}
+          min-idle: ${REDIS_MIN_IDLE:4}
+      ssl: ${REDIS_SSL:false}
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: ${CACHE_TTL:3600000ms} # 1 hour default
+
+# Production-specific configurations
+url-shortener:
+  baseUrl: "${SHORTCODE_BASE_URL}"  # Required environment variable
+
+shortcode:
+  pool:
+    batchSize: ${SHORTCODE_BATCH_SIZE:5000}
+    minPoolSize: ${SHORTCODE_MIN_POOL_SIZE:1000}
+    schedulerFixedDelaySeconds: ${SHORTCODE_SCHEDULER_DELAY:300}  # 5 minutes
+    initialDelayMs: ${SHORTCODE_INITIAL_DELAY:60000}             # 1 minute
+    cacheKeyPrefix: "prod:shortcode:pool"
+    lockKey: "prod:shortcode:pool:lock"
+    lockTimeoutMs: ${SHORTCODE_LOCK_TIMEOUT:45000}               # 45 seconds
+    enableScheduledGeneration: ${SHORTCODE_ENABLE_SCHEDULED:true}
+
+# Production logging (minimal, structured for log aggregation)
+logging:
+  level:
+    com.example.url_shortener: INFO
+    org.springframework: WARN
+    org.springframework.security: INFO
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{40} - %msg%n"
+  file:
+    name: ${LOG_FILE:/var/log/url-shortener/application.log}
+    max-size: ${LOG_MAX_SIZE:100MB}
+    max-history: ${LOG_MAX_HISTORY:30}
+
+# Production management endpoints (highly restricted)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+  health:
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+
+# Production server configuration
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: ${CONTEXT_PATH:}
+  tomcat:
+    max-threads: ${TOMCAT_MAX_THREADS:200}
+    min-spare-threads: ${TOMCAT_MIN_SPARE_THREADS:10}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:8192}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+# Security configurations for production
+spring.security:
+  require-ssl: ${REQUIRE_SSL:true}

@@ -1,40 +1,22 @@
+# Common configurations across all profiles
 spring:
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
+  application:
+    name: url-shortener
+  
+  # Default profile if none specified
+  profiles:
+    default: dev
+    
+  # Common Jackson configuration
+  jackson:
+    default-property-inclusion: non-null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
 
-  cache:
-    type: redis
-    redis:
-      time-to-live: 600000ms # 10 minutes
-
-# Short Code Pool Configuration
-shortcode:
-  pool:
-    batchSize: 1000                   # Number of short codes to generate in each batch
-    minPoolSize: 500                  # Minimum pool size before triggering replenishment
-    schedulerFixedDelaySeconds: 300   # 5 minutes between scheduled runs
-    initialDelayMs: 60000             # Wait 1 minute after startup before first run
-    cacheKeyPrefix: "shortcode:pool"  # Redis key prefix for the pool
-    lockKey: "shortcode:pool:lock"    # Redis key for distributed locking
-    lockTimeoutMs: 30000              # Lock timeout in milliseconds
-    enableScheduledGeneration: true   # Enable/disable scheduled generation
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
-  health:
-    redis:
-      enabled: true
+# Common server configuration
+server:
+  error:
+    include-message: on-param
+    include-binding-errors: on-param

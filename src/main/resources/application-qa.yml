@@ -1,0 +1,64 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:qa-redis.example.com}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 6
+          min-idle: 2
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000ms # 10 minutes
+
+# QA-specific configurations
+url-shortener:
+  baseUrl: "${SHORTCODE_BASE_URL:https://qa-shortener.example.com/}"
+
+shortcode:
+  pool:
+    batchSize: ${SHORTCODE_BATCH_SIZE:500}
+    minPoolSize: ${SHORTCODE_MIN_POOL_SIZE:250}
+    schedulerFixedDelaySeconds: ${SHORTCODE_SCHEDULER_DELAY:180}  # 3 minutes
+    initialDelayMs: ${SHORTCODE_INITIAL_DELAY:30000}             # 30 seconds
+    cacheKeyPrefix: "qa:shortcode:pool"
+    lockKey: "qa:shortcode:pool:lock"
+    lockTimeoutMs: ${SHORTCODE_LOCK_TIMEOUT:20000}
+    enableScheduledGeneration: ${SHORTCODE_ENABLE_SCHEDULED:true}
+
+# QA logging
+logging:
+  level:
+    com.example.url_shortener: INFO
+    org.springframework.cache: WARN
+    org.springframework.data.redis: WARN
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{40} - %msg%n"
+
+# QA management endpoints (restricted)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+    metrics:
+      enabled: true
+  health:
+    redis:
+      enabled: true
+
+# QA server configuration
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: ${CONTEXT_PATH:}
