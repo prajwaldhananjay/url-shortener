@@ -1,6 +1,6 @@
 # URL Shortener
 
-A high-performance URL shortening service built with Spring Boot and Kotlin, designed for scalability and reliability.
+This project is a high-performance URL shortening service designed to provide a fast, reliable, and scalable solution for creating and managing short URLs. Built with modern technologies like Spring Boot, Kotlin, Redis, and MongoDB, it serves as a robust foundation for a production-grade application. This document provides a comprehensive overview of the service's architecture, functionality, and setup, demonstrating a practical approach to building a mission-critical web service.
 
 ## Overview
 
@@ -20,9 +20,9 @@ This URL shortener service provides a simple REST API to create shortened URLs f
 ### Prerequisites
 
 - Java 21 or higher
-- MongoDB (for production/QA environments)
-- Redis (required for all environments)
-- Gradle (or use the included wrapper)
+- MongoDB 4.4+ (for production/QA environments)
+- Redis 6.0+ (required for all environments)
+- Gradle 8.14.3 (or use the included wrapper)
 
 ### Environment Profiles
 
@@ -30,7 +30,6 @@ The application supports multiple environment profiles with different configurat
 
 #### Development Profile (Default)
 ```bash
-# Runs on http://localhost:8080
 ./gradlew bootRun
 ```
 - Local Redis required (`localhost:6379`)
@@ -41,6 +40,7 @@ The application supports multiple environment profiles with different configurat
 #### QA Profile
 ```bash
 # Environment variables required
+export MONGODB_URI=mongodb://qa-mongo.example.com:27017/urlshortener
 export REDIS_HOST=qa-redis.example.com
 export SHORTCODE_BASE_URL=https://qa-shortener.example.com/
 ./gradlew bootRun --args='--spring.profiles.active=qa'
@@ -49,6 +49,7 @@ export SHORTCODE_BASE_URL=https://qa-shortener.example.com/
 #### Production Profile
 ```bash
 # All infrastructure settings via environment variables
+export MONGODB_URI=mongodb://prod-user:prod-password@prod-mongo.cluster.com:27017/urlshortener?authSource=admin
 export REDIS_HOST=prod-redis.cluster.com
 export REDIS_PASSWORD=your-redis-password
 export SHORTCODE_BASE_URL=https://myproject.de/
@@ -59,11 +60,11 @@ export SHORTCODE_BASE_URL=https://myproject.de/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/prajwaldhananjay/url-shortener.git
    cd url-shortener
    ```
 
-2. **Start Redis** (required for all profiles)
+2. **Start Redis** 
    ```bash
    # Using Docker
    docker run -d -p 6379:6379 --name redis redis:latest
@@ -85,6 +86,7 @@ The application will start on `http://localhost:8080`
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
+| `MONGODB_URI` | MongoDB connection string | mongodb://localhost:27017/urlshortener | QA/Prod |
 | `REDIS_HOST` | Redis server hostname | localhost | QA/Prod |
 | `REDIS_PORT` | Redis server port | 6379 | No |
 | `REDIS_PASSWORD` | Redis authentication password | - | Prod |
@@ -110,6 +112,15 @@ Content-Type: application/json
 }
 ```
 
+**Using cURL:**
+```bash
+curl --location 'http://localhost:8080/api/v1/short-codes' \
+--header 'Content-Type: application/json' \
+--data '{
+    "longUrl" : "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.time/-instant/"
+}'
+```
+
 **Response:**
 ```json
 {
@@ -124,23 +135,32 @@ Content-Type: application/json
 GET /api/v1/short-codes/{shortCode}
 ```
 
+**Using cURL:**
+```bash
+curl --location 'http://localhost:8080/api/v1/short-codes/1l9ZwsG'
+```
+
 **Response:** HTTP 301 redirect to the original URL
 
 ## Architecture Design
 
 ### Core Components
 
-1. **Controller Layer**: REST endpoints for URL operations
-2. **Service Layer**: Business logic separation (Read/Write services)
-3. **Repository Layer**: Data persistence with MongoDB
-4. **Caching Layer**: Redis integration for performance optimization
-5. **Exception Handling**: Global error handling with custom exceptions
+1. **REST Controller Layer**: Exposes public API endpoints for creating short codes and handling redirects.
+2. **Service Layer**: Contains the core business logic, separated into read and write services for clarity.
+3. **Repository Layer**: Manages data persistence with MongoDB, storing URL mappings and a dedicated counter for sequence-based ID generation.
+4. **Caching Layer**: Uses Redis with LRU (Least Recently Used) eviction strategy and configurable TTL for high-speed caching of frequently accessed short codes, drastically reducing latency.
+5. **Short Code Pool Generator**: An asynchronous, scheduled service that proactively generates a pool of unique short codes and stores them in Redis to ensure instant availability for new requests.
 
 ### Short Code Generation
 
-- Uses Base62 encoding for compact, URL-safe short codes
-- Generates unique codes to prevent collisions
-- Optimized for readability and sharing
+Our service uses a dual-strategy for short code generation to ensure speed and uniqueness.
+
+**Unique Code Foundation**: We use a high-performance MongoDB counter to generate an atomic, ever-increasing number for each new URL. This number is then converted into a compact, 7-character short code using Base62 encoding. This guarantees every code is globally unique and avoids collisions.
+
+**Performance Boost with a Pool**: To prevent a bottleneck at the database counter, a scheduled job proactively fetches large batches of unique numbers. It generates the short codes from these numbers and stores them in a Redis pool. When a new URL is requested, the system serves a pre-generated code instantly from the pool.
+
+**Dynamic Replenishment**: The system automatically checks the pool's size periodically (configurable property). If it drops below a set threshold, the scheduler generates a new batch of codes to ensure the pool is always ready for a sudden increase in traffic. If the pool is empty, the system falls back to real-time generation.
 
 ### Security Features
 
@@ -189,26 +209,20 @@ The project includes comprehensive unit tests covering all service layers and AP
 
 ### Scalability Improvements
 
-1. **MongoDB Sharding**
-   - Implement horizontal sharding for URL storage
-   - Use short code prefix-based sharding strategy
-   - Auto-balancing across multiple shards for optimal performance
+1. **MongoDB Sharding** - Implement horizontal sharding for scalable URL storage distribution across multiple database instances.
 
-2. **Distributed Caching**
-   - Redis Cluster setup for cache distribution
-   - Cache partitioning strategies
-   - Multi-level caching (L1: Local, L2: Redis)
+2. **Key Generation Service** - Transition the scheduled short code pool into a dedicated microservice for improved performance and separation of concerns.
 
-3. **Load Balancing**
-   - Multiple service instances behind load balancer
-   - Health check integration for automatic failover
-   - Geographical distribution for reduced latency
+3. **Load Balancer** - Deploy multiple application instances behind a load balancer to ensure high availability and distribute traffic evenly for optimal responsiveness.
+
+4. **Distributed Caching** - Implement a fault-tolerant Redis Cluster with multi-level caching strategy to handle high traffic volumes and minimize database access latency.
+
+5. **Content Delivery Network** - Establish global edge locations to cache redirect responses, drastically reducing latency for users worldwide through geographical proximity.
 
 ### Additional Features
 
 - User authentication and URL management
 - Custom short code creation
-- Key Generation Service to reduce write latency
 - Rate limiting and API throttling
 - URL expiration and cleanup policies
 - Analytics and tracking of URL clicks and metadata
