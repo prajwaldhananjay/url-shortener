@@ -1,5 +1,7 @@
 spring:
   data:
+    mongodb:
+      uri: ${MONGODB_URI}
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
@@ -10,8 +12,8 @@ spring:
           max-active: ${REDIS_MAX_ACTIVE:16}
           max-idle: ${REDIS_MAX_IDLE:8}
           min-idle: ${REDIS_MIN_IDLE:4}
-      ssl: ${REDIS_SSL:false}
-
+      ssl:
+        enabled: ${REDIS_SSL:false}
   cache:
     type: redis
     redis:
