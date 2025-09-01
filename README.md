@@ -80,6 +80,64 @@ export SHORTCODE_BASE_URL=https://myproject.de/
 
 The application will start on `http://localhost:8080`
 
+## Docker Deployment
+
+### Using Docker Compose (Recommended)
+
+The easiest way to run the entire application stack with all dependencies:
+
+```bash
+# Start all services (app, MongoDB, Redis)
+docker-compose up
+
+# Start in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f app
+
+# Stop all services
+docker-compose down
+```
+
+This will start:
+- **Application**: `http://localhost:8080`
+- **MongoDB**: `localhost:27019`
+- **Redis**: `localhost:6380`
+
+### Using Docker Only
+
+1. **Build the Docker image**
+   ```bash
+   docker build -t url-shortener .
+   ```
+
+2. **Run with external dependencies**
+   ```bash
+   docker run -p 8080:8080 \
+     -e SPRING_DATA_MONGODB_URI=mongodb://host.docker.internal:27017/urlshortener \
+     -e SPRING_DATA_REDIS_HOST=host.docker.internal \
+     url-shortener
+   ```
+
+### Docker Configuration
+
+The Docker setup includes:
+- **Multi-stage build** for optimized image size
+- **Non-root user** for security
+- **Alpine Linux** for minimal footprint
+- **JVM optimizations** for containerized environments
+
+### Accessing MongoDB in Docker
+
+```bash
+# Connect to MongoDB container
+mongosh mongodb://localhost:27019
+
+# Or connect directly to container
+docker exec -it url-shortener-mongodb-1 mongosh
+```
+
 ### Configuration
 
 #### Environment Variables (QA/Production)
