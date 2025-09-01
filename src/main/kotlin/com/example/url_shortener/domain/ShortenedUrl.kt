@@ -9,9 +9,10 @@ import java.time.Instant
 data class ShortenedUrl(
     @Id
     val id: String? = null,
-    @Indexed(unique = true, name = "idx_short_code")
+
     val shortCode: String,
-    @Indexed(name = "idx_original_url")
+
     val originalUrl: String,
+
     val createdAt: Instant
 )
