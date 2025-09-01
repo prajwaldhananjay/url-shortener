@@ -100,6 +100,15 @@ The application will start on `http://localhost:8080`
 GET /actuator/health
 ```
 
+## API Documentation
+
+The application provides interactive API documentation through Swagger/OpenAPI:
+
+- **Swagger UI**: `http://localhost:8080/swagger-ui/index.html` (interactive documentation)
+- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs` (machine-readable specification)
+
+> **Note**: Replace `localhost:8080` with your deployed instance URL (e.g., `https://yourdomain.com`)
+
 ## API Endpoints
 
 ### Create Short URL
