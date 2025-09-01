@@ -14,6 +14,11 @@ spring:
       write-dates-as-timestamps: false
     deserialization:
       fail-on-unknown-properties: false
+  
+  # MongoDB configuration
+  data:
+    mongodb:
+      auto-index-creation: true
 
 # Common server configuration
 server:
