@@ -228,6 +228,14 @@ The project includes comprehensive unit tests covering all service layers and AP
 
 5. **Content Delivery Network** - Establish global edge locations to cache redirect responses, drastically reducing latency for users worldwide through geographical proximity.
 
+### Observability Improvements
+
+1. **Robust Logging** - Implement asynchronous logging with structured log formats using separate threads to write to files or centralized data stores, ensuring minimal performance impact while capturing comprehensive application behavior.
+
+2. **Prometheus Integration** - Add comprehensive performance monitoring with custom business metrics and system health indicators for proactive issue detection and capacity planning.
+
+3. **Distributed Tracing** - Implement request correlation IDs and tracing across service boundaries to facilitate debugging and performance analysis in distributed environments.
+
 ### Additional Features
 
 - User authentication and URL management
