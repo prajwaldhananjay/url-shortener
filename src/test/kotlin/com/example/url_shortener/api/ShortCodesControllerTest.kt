@@ -7,6 +7,7 @@ import com.example.url_shortener.exception.ShortCodeGenerationException
 import com.example.url_shortener.exception.ShortCodeNotFoundException
 import com.example.url_shortener.service.ShortCodeReadService
 import com.example.url_shortener.service.ShortCodeWriteService
+import com.example.url_shortener.config.UrlShortenerProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -37,6 +38,9 @@ class ShortCodesControllerTest {
     @MockBean
     private lateinit var shortCodeWriteService: ShortCodeWriteService
 
+    @MockBean
+    private lateinit var urlShortenerProperties: UrlShortenerProperties
+
     @Test
     fun `POST short-codes should return 201 Created with valid request`() {
         val request = CreateShortCodeRequest("https://example.com/very-long-url")
@@ -48,6 +52,7 @@ class ShortCodesControllerTest {
         )
 
         whenever(shortCodeWriteService.createShortCode(request.longUrl)).thenReturn(shortenedUrl)
+        whenever(urlShortenerProperties.baseUrl).thenReturn("https://myproject.de/")
 
         mockMvc.perform(
             post("/api/v1/short-codes")
@@ -142,7 +147,7 @@ class ShortCodesControllerTest {
 
         whenever(shortCodeReadService.getLongUrl(shortCode)).thenReturn(originalUrl)
 
-        mockMvc.perform(get("/api/v1/{shortCode}", shortCode))
+        mockMvc.perform(get("/api/v1/short-codes/{shortCode}", shortCode))
             .andExpect(status().isMovedPermanently)
             .andExpect(header().string("Location", originalUrl))
             .andExpect(content().string(""))
@@ -157,7 +162,7 @@ class ShortCodesControllerTest {
         whenever(shortCodeReadService.getLongUrl(shortCode))
             .thenThrow(ShortCodeNotFoundException(shortCode))
 
-        mockMvc.perform(get("/api/v1/{shortCode}", shortCode))
+        mockMvc.perform(get("/api/v1/short-codes/{shortCode}", shortCode))
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.status").value(404))
