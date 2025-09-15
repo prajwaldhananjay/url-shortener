@@ -1,6 +1,6 @@
 # URL Shortener
 
-This project is a high-performance URL shortening service designed to provide a fast, reliable, and scalable solution for creating and managing short URLs. Built with modern technologies like Spring Boot, Kotlin, Redis, and MongoDB, it serves as a robust foundation for a production-grade application. This document provides a comprehensive overview of the service's architecture, functionality, and setup, demonstrating a practical approach to building a mission-critical web service.
+A high-performance URL shortener built with modern technologies like Spring Boot, Kotlin, Redis, and MongoDB. Designed for speed, reliability, and scalability, this service provides a solid foundation for creating and managing short URLs in production-grade environments. The project showcases a practical approach to architecting a mission-critical web service, covering its design, functionality, and setup in detail.
 
 ## Overview
 
